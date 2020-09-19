@@ -1,0 +1,51 @@
+in terminal to import a json file to a databse and a collections
+
+mongoimport --db <database_name> --collection <collection_name> --jsonArray --file dataFile.json
+
+// inside mongo
+
+> db    // show the selected database
+
+> show dbs    // show all the available databases in the server
+
+> use <database_name>   // switch to the <database_name>
+
+> show collections   // show all the collections available in mongo
+
+basic operations with CRUD
+
+// To insert a data, here is an example
+> db.tours.insert({"tourName":"The Wines of Santa Cruz","tourLength":3,"tourDescription":"Discover Santa Cruz's wineries","tourPrice":500,"tourTags":["Wine", "Santa Cruz"]})
+
+// to update or insert on field into a specified data, example:
+> db.tours.update({"tourName" : "The Wines of Santa Cruz"}, {$set: {"tourRegion":"Central Coast"}})
+// This only insert a parameter called tourRegion to the data we've just inserted.
+
+// to add more data to an array, with this example
+> db.tours.update({"tourName":"The Wines of Santa Cruz"}, {$addToSet: {"tourTags":"boardWalk"}})
+
+// to remove a data from a collection
+> db.tours.remove({"tourName":"The Wines of Santa Cruz"})
+
+// to read the data
+> db.tours.find({"tourTags":"wine"})
+
+// To create an Single Key Index
+> db.tour.createIndex({tourPackage:1})
+
+// to drop a collection
+> db.tour.drop()
+
+// search on multiple key 
+// $lte: less than or equal operator
+> db.tours.find({"tourPrice":{$lte:500}, "tourLength":{$lte:3}})
+
+
+// with this at the end of the query you will get some stats about the query
+> ... .explain()
+// adding a "executionStats" insede explain you can get more information about your query
+> ... .explain("executionStats")
+
+// Creating a compound indexes
+> db.tours.createIndex({tourPrice:1, tourLength:1})
+
