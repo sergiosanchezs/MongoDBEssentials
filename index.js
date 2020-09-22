@@ -19,7 +19,7 @@ const init = async () => {
         for (let key in req.query) {
           findObject[key] = req.query[key];
         }
-        console.log(findObject);
+        // console.log(findObject);
         return collection.find(findObject).toArray();
       },
     },
@@ -28,7 +28,8 @@ const init = async () => {
       method: 'POST',
       path: '/api/tours',
       handler: (req, res) => {
-        res('Adding new tour');
+        collection.insertOne(req.payload);
+        return req.payload;
       },
     },
     // Get a Single tour
@@ -42,21 +43,43 @@ const init = async () => {
     {
       method: 'PUT',
       path: '/api/tours/{name}',
-      handler: (req, res) => {
-        res(`Updating ${req.params.name}`);
+      handler: async (req, res) => {
+        const searchObject = { tourName: req.params.name };
+        if (req.query.replace == 'true') {
+          req.payload.tourName = req.params.name;
+          await collection.replaceOne(searchObject, req.payload);
+          return await collection.findOne(searchObject);
+        } else {
+          await collection.updateOne(searchObject, { $set: req.payload });
+          return await collection.findOne(searchObject);
+        }
       },
     },
     // Delete a Single tour
     {
       method: 'DELETE',
       path: '/api/tours/{name}',
-      handler: (req, res) => {
-        res(`Deleting ${req.params.name}`).code(204);
+      handler: async (req, res) => {
+        const searchObject = { tourName: req.params.name };
+        let rs;
+        console.log(`deleteall: ${req.query.deleteall}`);
+        if (req.query.deleteall == 'true') {
+          rs = await collection.deleteMany(searchObject);
+          console.log(`Many: ${rs.result.n}`);
+        } else {
+          rs = await collection.deleteOne(searchObject);
+          console.log(`One: ${rs.result.n}`);
+        }
+        return {
+          message: `success: ${rs.result.n} document${
+            rs.result.n > 1 ? 's' : ''
+          } was deleted successfully!`,
+        };
       },
     },
     // Home Page
     {
-      method: 'DELETE',
+      method: 'GET',
       path: '/',
       handler: (req, res) => {
         res('Hello World from Hapi/Mongo example!');

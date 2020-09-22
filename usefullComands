@@ -1,8 +1,10 @@
 in terminal to import a json file to a databse and a collections
 
-mongoimport --db <database_name> --collection <collection_name> --jsonArray --file dataFile.json
+$ mongoimport --db <database_name> --collection <collection_name> --jsonArray --file dataFile.json
+$ mongoimport --db learning_mongo --collection tours --file data/tours_r.json --jsonArray
+$ mongoimport --db learning_mongo --collection tours --file data/tours.json --jsonArray
 
-// inside mongo
+// inside mongo shell
 
 > db    // show the selected database
 
@@ -27,14 +29,43 @@ basic operations with CRUD
 // to remove a data from a collection
 > db.tours.remove({"tourName":"The Wines of Santa Cruz"})
 
-// to read the data
+// Bring back all the data in the collection 
+> db.tours.find()
+
+// to read the data with tourTags as wine
 > db.tours.find({"tourTags":"wine"})
+
+// using projections to bring back only the needed data
+// For instance, bring only the 'tourName' of each tour (This include the _id)
+> db.tours.find({},{tourName:1})
+// To exclude the _id
+> db.tours.find({},{tourName:1,_id:0})
+// Let's bring more information (Hard to read)
+> db.tours.find({},{tourName:1, tourPrice:1, tourLength:1, _id:0})
+// the previous command but with pretty
+> db.tours.find({},{tourName:1, tourPrice:1, tourLength:1, _id:0}).pretty()
+// sorting in desceding touPrice the previous command
+> db.tours.find({},{tourName:1, tourPrice:1, tourLength:1, _id:0}).pretty().sort({tourPrice:-1})
+// limit operator
+> db.tours.find({},{tourName:1, tourPrice:1, tourLength:1, _id:0}).pretty().sort({tourPrice:-1}).limit(1)
+// working with pages you can skip the first items of the query
+> db.tours.find({},{tourName:1, tourPrice:1, tourLength:1, _id:0}).pretty().sort({tourPrice:-1}).limit(1).skip(20)
+
+//when you have an array for example of tags you can match the result
+// tourTags: is an array of tags
+> db.tours.find({"tourTags":"boating"})
+
+// with operators $lte: less than or equal, $gte: greater than or equal
+> db.tours.find({tourPrice:{$lte:1000,$gte:800}}).pretty()
 
 // To create an Single Key Index
 > db.tour.createIndex({tourPackage:1})
 
 // to drop a collection
 > db.tour.drop()
+
+// remove all the items in a collection
+> db.tours.remove({})
 
 // search on multiple key 
 // $lte: less than or equal operator
@@ -48,4 +79,35 @@ basic operations with CRUD
 
 // Creating a compound indexes
 > db.tours.createIndex({tourPrice:1, tourLength:1})
+
+// creating a unique field
+> db.tours.createIndex({"tourName":1},{unique:true})
+
+// creating text indexes
+> db.tours.createIndex({tourDescription:"text", tourBlurb:"text"})
+// and searching on the text
+> db.tours.find({$text:{$search:"wine"}}).pretty()
+// relevance score use by the Mongo Engine. get the best document
+// it can be higher if it found more words related with the search
+> db.tours.find({$text:{$search:"wine"}}, {score:{$meta:"textScore"}, tourName:1, _id:0}).pretty().sort({score:{$meta:"textScore"}})
+
+// using regular expressions
+> db.tours.find({tourDescription:{$regex:/backpack/i}},{tourName:1, _id:0}).pretty()
+// regex shorthand
+> db.tours.find({tourDescription:/backpack/i},{tourName:1, _id:0}).pretty()
+
+// httpie commands
+
+$ http http://localhost:8080/api/tours
+
+$ http "http://localhost:8080/api/tours?tourPackage=Backpack Cal"
+
+$ http "http://localhost:8080/api/tours/Big Sur Retreat"
+
+$ http "http://localhost:8080/api/tours/Kirsten's Fabulous Tour"
+
+$ http POST http://localhost:8080/api/tours tourName="Kirsten's Fabulous Tour" 
+tourPackage="Fun in the sun" tourPrice=10000 tourLength=5
+
+$ http PUT "http://localhost:8080/api/tours/Kirsten's Fabulous Tour" tourBlurb="Get your tan on"
 
