@@ -3,6 +3,8 @@ in terminal to import a json file to a databse and a collections
 $ mongoimport --db <database_name> --collection <collection_name> --jsonArray --file dataFile.json
 $ mongoimport --db learning_mongo --collection tours --file data/tours_r.json --jsonArray
 $ mongoimport --db learning_mongo --collection tours --file data/tours.json --jsonArray
+$ mongoimport --collection  people --db learning_mongo --jsonArray --file data/people.json
+$ mongoimport --collection  movies --db learning_mongo --jsonArray --file data/movies.json
 
 // inside mongo shell
 
@@ -96,6 +98,39 @@ basic operations with CRUD
 // regex shorthand
 > db.tours.find({tourDescription:/backpack/i},{tourName:1, _id:0}).pretty()
 
+
+// =================================================
+//Working with movies and people collections
+> db.people.findOne({_id:'Brad Pitt'})
+> db.movies.findOne({_id:"Fight Club"})
+
+> db.people.find({movies:"The Avengers"}).pretty()
+
+// Modelling the schema (adding cast to the movie object)
+> var moviename="The Avengers"
+> var movieObj=db.movies.findOne({_id:moviename})
+> movieObj.cast = []
+> var personArray = db.people.find({movies:moviename})
+> personArray.forEach((person) => {
+... movieObj.cast.push(person)
+... })
+> movieObj
+
+// using aggregation
+> db.tours.count({tourPackage:"Cycle California"})
+
+// How many tours are in each tourPackage
+> db.tours.aggregate([{$group: {_id:'$tourPackage', count: {$sum:1}}}])
+
+// How many tours each of the organizers has
+> db.tours.aggregate([{$group: {_id:'$tourOrganizer.organizerName', count: {$sum:1}}}])
+// with the average in the prices of each organizer
+> db.tours.aggregate([{$group: {_id:'$tourOrganizer.organizerName', average:{$avg: '$tourPrice'}, count: {$sum:1}}}])
+// use the result and insert it into a new category with out as prices
+> db.tours.aggregate([{$group: {_id:'$tourOrganizer.organizerName', average:{$avg: '$tourPrice'}, count: {$sum:1}}}, {$out: 'prices'}])
+// accessing the previous output
+> db.prices.find()
+// =================================================
 // httpie commands
 
 $ http http://localhost:8080/api/tours
@@ -110,4 +145,15 @@ $ http POST http://localhost:8080/api/tours tourName="Kirsten's Fabulous Tour"
 tourPackage="Fun in the sun" tourPrice=10000 tourLength=5
 
 $ http PUT "http://localhost:8080/api/tours/Kirsten's Fabulous Tour" tourBlurb="Get your tan on"
+
+
+// Replication features
+- Full copies of the dataset.
+- Primary and secondary servers.
+- Automatic failover.
+
+// Sharding features
+- Partition data onto multiple servers.
+- Server farm friendly.
+- Scalability and performance.
 
